@@ -6,6 +6,7 @@ import connectMongoDB from './db/connectMongoDB.js'
 import userRoutes from './routes/user.route.js'
 import {v2 as cloudinary} from 'cloudinary';
 import postRoutes from './routes/post.route.js';
+import notificationRoutes from './routes/notification.route.js';
 
 dotenv.config();
 cloudinary.config({
@@ -22,6 +23,7 @@ app.use(express.urlencoded({extended:true}));//to parse urlencoded data
 app.use("/api/auth",authRoutes)
 app.use("/api/users",userRoutes)
 app.use("/api/posts",postRoutes)
+app.use("/api/notifications",notificationRoutes)
 
 
 app.listen(PORT,()=>{
