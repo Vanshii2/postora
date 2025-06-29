@@ -23,7 +23,8 @@ app.use(cors({
   credentials: true
 }));
 
-app.use(express.json());//to parse req.body
+app.use(express.json({limit:"5mb"}));//to parse req.body
+//limit shouldn't be too large to prevent DOS attacks
 app.use(cookieParser());
 app.use(express.urlencoded({extended:true}));//to parse urlencoded data
 app.use("/api/auth",authRoutes)
