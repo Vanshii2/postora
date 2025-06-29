@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import LoadingSpinner from "../common/LoadingSpinner";
+import { formatPostDate } from "../../utils/date";
 
 const Post = ({ post }) => {
 	const [comment, setComment] = useState("");
@@ -22,6 +23,10 @@ const Post = ({ post }) => {
 		  },
 		});
 	const queryClient = useQueryClient();
+	const postOwner = post.user;
+	const isLiked = authUser ? post.likes.includes(authUser._id) : false;
+	const isMyPost = authUser?._id === post.user._id;
+	const formattedDate = formatPostDate(post.createdAt);
 
 	const {mutate: deletePost,isPending: isDeleting} = useMutation({
 		mutationFn: async()=>{
@@ -102,12 +107,65 @@ const Post = ({ post }) => {
 			toast.error(error.message)
 		}
 	})
+    
+	const {mutate:commentpost,isPending:isCommenting}=useMutation({
+		mutationFn: async()=>{
+			try{
+				const res=await fetch(`/api/posts/comment/${post._id}`,{
+					method:"POST",
+					headers:{
+						"Content-Type":"application/json",
+					},
+					body:JSON.stringify({text:comment}),
+					credentials:"include",
+				});
+				const data=await res.json();
+				if(!res.ok){
+					throw new Error(data.error||"Something Went Wrong")
+				}
+				return data;
+			}
+			catch(error){
+				throw new Error(error.message)
+			}
+		},
+		onSuccess:(data)=>{
+			setComment("");
+			queryClient.invalidateQueries({queryKey:["posts"]})
+			queryClient.setQueryData(["posts"],(oldData)=>{
+				if(!oldData)return[];
+				return oldData.map((p)=>{
+					if(p._id===post._id){
+						return{...p,comments:data.comments};
+					}
+					return p;
+				})
+			})
+			queryClient.setQueryData(["posts", "forYou"],(oldData)=>{
+				if(!oldData)return[];
+				return oldData.map((p)=>{
+					if(p._id===post._id){
+						return{...p,comments:data.comments};
+					}
+					return p;
+				})
+			})
+			queryClient.setQueryData(["posts", "following"],(oldData)=>{
+				if(!oldData)return[];
+				return oldData.map((p)=>{
+					if(p._id===post._id){
+						return{...p,comments:data.comments};
+					}
+					return p;
+				})
+			})
+		},
+		onError:(error)=>{
+			toast.error(error.message)
+		}
+	})
+	
 
-	const postOwner = post.user;
-	const isLiked = authUser ? post.likes.includes(authUser._id) : false;
-	const isMyPost = authUser?._id === post.user._id;
-	const formattedDate = "1h";
-	const isCommenting = false;
 
 	const handleDeletePost = () => {
 		deletePost();
@@ -115,6 +173,8 @@ const Post = ({ post }) => {
 
 	const handlePostComment = (e) => {
 		e.preventDefault();
+		if(isCommenting)return;
+		commentpost();
 	};
 
 	const handleLikePost = () => {
