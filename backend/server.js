@@ -7,6 +7,7 @@ import userRoutes from './routes/user.route.js'
 import {v2 as cloudinary} from 'cloudinary';
 import postRoutes from './routes/post.route.js';
 import notificationRoutes from './routes/notification.route.js';
+import cors from "cors";
 
 dotenv.config();
 cloudinary.config({
@@ -16,7 +17,12 @@ cloudinary.config({
 });
 //middleware
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 4000;
+app.use(cors({
+  origin: "http://localhost:3000",
+  credentials: true
+}));
+
 app.use(express.json());//to parse req.body
 app.use(cookieParser());
 app.use(express.urlencoded({extended:true}));//to parse urlencoded data

@@ -26,6 +26,46 @@ const userSchema = new mongoose.Schema({
 
 
 },{timestamps:true});
+/*
+lets bcrypt the password here
+ UserSchema.pre("save",async function(next)=>{
+    if(!this.isModified("password"))return next();
+    this.password= bcrypt.hash(thisPassword,10)
+    next();
+ })
+
+ //ab yha p password compare bhi kr dete h 
+ userSchema.methods.isPasswordCorrct = async function(password){
+   return await  bcrypt.compare(password,this.password)
+    }
+//JWT token generate krna 
+ userSchema.methods.genrateAccessToken= function(){
+ jwt.sign({
+      _id: this._id,
+      email= this.email,
+      username= this.username,
+      fullName = this.fullName// payload ka nam = database se arhi 
+ },
+   process.env.ACCESS_TOKEN_SECRET,
+   {
+    expiresIn: pross.env.ACCESSS_TOKEN_EXPIRY
+   }
+    
+ )
+ }
+
+  userSchema.methods.genrateRefereshToken= function(){
+ jwt.sign({
+      _id: this._id,
+ },
+   process.env.REFRESH_TOKEN_SECRET,
+   {
+    expiresIn: pross.env.REFRESH_TOKEN_EXPIRY
+   }
+    
+ )
+ }
+*/
 
 const User= mongoose.model('User',userSchema)
 
