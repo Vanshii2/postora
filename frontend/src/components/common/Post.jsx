@@ -5,19 +5,50 @@ import { FaRegBookmark } from "react-icons/fa6";
 import { FaTrash } from "react-icons/fa";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
+import LoadingSpinner from "../common/LoadingSpinner";
 
 const Post = ({ post }) => {
 	const [comment, setComment] = useState("");
+	const {data: authUser} = useQuery({
+		queryKey: ["authUser"],
+	});
+	const queryClient = useQueryClient();
+
+	const {mutate: deletePost,isPending} = useMutation({
+		mutationFn: async()=>{
+			try{
+				const res = await fetch(`/api/posts/${post._id}`, {
+					method: "DELETE",
+					credentials: "include",
+				});
+				if(!res.ok){
+					throw new Error("Failed to delete post");
+				}
+				return res.json();
+			}catch(error){
+				console.error(error.message);
+			}
+		},
+		onSuccess: ()=>{
+			toast.success("Post deleted successfully");
+			queryClient.invalidateQueries({queryKey: ["posts"]});
+		},
+		onError: (error)=>{
+			toast.error(error.message);
+		}
+	});
+
 	const postOwner = post.user;
 	const isLiked = false;
-
-	const isMyPost = true;
-
+	const isMyPost = authUser?._id === post.user._id;
 	const formattedDate = "1h";
-
 	const isCommenting = false;
 
-	const handleDeletePost = () => {};
+	const handleDeletePost = () => {
+		deletePost();
+	};
 
 	const handlePostComment = (e) => {
 		e.preventDefault();
@@ -45,7 +76,8 @@ const Post = ({ post }) => {
 						</span>
 						{isMyPost && (
 							<span className='flex justify-end flex-1'>
-								<FaTrash className='cursor-pointer hover:text-red-500' onClick={handleDeletePost} />
+								{!isPending && <FaTrash className='cursor-pointer hover:text-red-500' onClick={handleDeletePost} />}
+								{isPending && <LoadingSpinner size='sm'/>}
 							</span>
 						)}
 					</div>
@@ -70,7 +102,6 @@ const Post = ({ post }) => {
 									{post.comments.length}
 								</span>
 							</div>
-							{/* We're using Modal Component from DaisyUI */}
 							<dialog id={`comments_modal${post._id}`} className='modal border-none outline-none'>
 								<div className='modal-box rounded border border-gray-600'>
 									<h3 className='font-bold text-lg mb-4'>COMMENTS</h3>
@@ -133,7 +164,6 @@ const Post = ({ post }) => {
 									<FaRegHeart className='w-4 h-4 cursor-pointer text-slate-500 group-hover:text-pink-500' />
 								)}
 								{isLiked && <FaRegHeart className='w-4 h-4 cursor-pointer text-pink-500 ' />}
-
 								<span
 									className={`text-sm text-slate-500 group-hover:text-pink-500 ${
 										isLiked ? "text-pink-500" : ""

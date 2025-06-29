@@ -39,6 +39,7 @@ function App() {
        },
        retry: false
      });
+     
      if(isLoading){
       return (
         <div className= 'h-screen flex justify-center items-center'>
