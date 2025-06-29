@@ -1,36 +1,65 @@
 import { Link } from "react-router-dom";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
+import toast from "react-hot-toast";
 
 import { IoSettingsOutline } from "react-icons/io5";
 import { FaUser } from "react-icons/fa";
 import { FaHeart } from "react-icons/fa6";
+import { useQuery , useMutation , useQueryClient } from "@tanstack/react-query";
 
 const NotificationPage = () => {
-	const isLoading = false;
-	const notifications = [
-		{
-			_id: "1",
-			from: {
-				_id: "1",
-				username: "johndoe",
-				profileImg: "/avatars/boy2.png",
+	const {data:notifications,isLoading}=useQuery({
+		queryKey:["notifications"],
+		queryFn:async()=>{
+			try{
+			const res=await fetch("/api/notifications",{credentials:"include"});
+			const data=await res.json();
+			if(!res.ok){
+				throw new Error(data.error||"Failed to fetch notifications")
+					}
+				return data;
+			}
+			catch(error){
+				throw new Error(error.message)
+			}
+		}
+	})	
+	const queryClient=useQueryClient();
+	const {mutate:deleteNotifications}=useMutation({	
+		mutationFn:async()=>{
+			try{
+			const res=await fetch("/api/notifications",{
+				method:"DELETE",
+				credentials:"include",
+			});
+			const data=await res.json();
+			if(!res.ok){
+				throw new Error(data.error||"Failed to delete notifications")
+			}
+			return data;
+			}
+			catch(error){
+				throw new Error(error.message)
+			}
 			},
-			type: "follow",
-		},
-		{
-			_id: "2",
-			from: {
-				_id: "2",
-				username: "janedoe",
-				profileImg: "/avatars/girl1.png",
+			onSuccess:()=>{
+				toast.success("All notifications deleted")
+				queryClient.invalidateQueries({queryKey:["notifications"]});
+			
+			
 			},
-			type: "like",
-		},
-	];
-
-	const deleteNotifications = () => {
-		alert("All notifications deleted");
-	};
+			onError:(error)=>{
+				toast.error(error.message)
+			}
+	});
+	const {mutate:deleteNotification,isPending:isDeleting}=useMutation({
+		mutationFn:async(notificationId)=>{
+			const res=await fetch(`/api/notifications/${notificationId}`,{
+				method:"DELETE",
+				credentials:"include",
+			});
+		}
+	})	
 
 	return (
 		<>
