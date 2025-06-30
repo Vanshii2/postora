@@ -24,12 +24,11 @@ import toast from 'react-hot-toast'
             queryClient.invalidateQueries({queryKey: ["suggestedUsers"]}),
             queryClient.invalidateQueries({queryKey: ["authUser"]})
         ]);
-        toast.success("Followed user");
     },
     onError: (error)=>{
         toast.error(error.message);
     }
     })
     return {follow,isPending};  
- }
- export default useFollow;
+}
+export default useFollow;
