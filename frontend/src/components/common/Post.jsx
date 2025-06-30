@@ -10,7 +10,7 @@ import toast from "react-hot-toast";
 import LoadingSpinner from "../common/LoadingSpinner";
 import { formatPostDate } from "../../utils/date";
 
-const Post = ({ post }) => {
+const Post = ({ post, feedType, username, userId }) => {
 	const [comment, setComment] = useState("");
 	const { data: authUser } = useQuery({
 		  queryKey: ["authUser"],
@@ -101,7 +101,27 @@ const Post = ({ post }) => {
 					}
 					return p;
 				})
-			 })
+			 });
+
+			 // START: ADDED FOR PROFILE PAGE CACHE UPDATE
+			 const queryKey = ["posts", feedType, username, userId];
+			 queryClient.setQueryData(queryKey, (oldData) => {
+				 if (!oldData) return [];
+ 
+				 if (feedType === "likes") {
+					 // If on the "Likes" feed, filter out the unliked post
+					 return oldData.filter((p) => data.likes.includes(p._id));
+				 }
+ 
+				 // For other feeds on the profile, just update the likes
+				 return oldData.map((p) => {
+					 if (p._id === post._id) {
+						 return { ...p, likes: data.likes };
+					 }
+					 return p;
+				 });
+			 });
+			 // END: ADDED FOR PROFILE PAGE CACHE UPDATE
 		},
 		onError: (error)=>{
 			toast.error(error.message)
