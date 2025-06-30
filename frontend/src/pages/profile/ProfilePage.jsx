@@ -50,38 +50,8 @@ const ProfilePage = () => {
 			}
 		}
 	})
-	const {mutate:updateProfile,isPending:isUpdatingProfile}=useMutation({
-		mutationFn:async()=>{
-			try{
-				const res=await fetch(`/api/users/update`,
-					{method: "POST",
-						headers:{
-							"Content-Type":"application/json"
-						},
-						body:JSON.stringify({
-							coverImg,
-							profileImg
-						})		
-					},
-				)
-				if(!res.ok) throw new Error("Failed to update profile")
-				return res.json();
-			}
-			catch(error){
-				throw new Error(error.message)
-			}
-		},
-		onSuccess:()=>{
-			toast.success("Profile updated successfully")
-			Promise.all([
-				queryClient.invalidateQueries({queryKey:["authUser"]}),
-				queryClient.invalidateQueries({queryKey:["user", username]})
-			])
-		},
-		onError:(error)=>{
-			toast.error(error.message)
-		}
-	})
+
+	
 		const isMyProfile = authUser && user && authUser._id === user._id;
 	const memberSince = formatMemberSinceDate(user?.createdAt)
 	const isFollowing = authUser && user && authUser.following.includes(user._id);
@@ -97,6 +67,27 @@ const ProfilePage = () => {
 			reader.readAsDataURL(file);
 		}
 	};
+
+	const { mutate: updateProfile, isPending: isUpdatingProfile } = useMutation({
+		mutationFn: async () => {
+			const res = await fetch(`/api/users/update`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ coverImg, profileImg }),
+				credentials: "include"
+			});
+			if (!res.ok) throw new Error("Failed to update profile");
+			return res.json();
+		},
+		onSuccess: () => {
+			toast.success("Profile updated successfully");
+			queryClient.invalidateQueries({ queryKey: ["authUser"] });
+			queryClient.invalidateQueries({ queryKey: ["user", username] });
+		},
+		onError: (error) => {
+			toast.error(error.message);
+		}
+	});
 
 	if (isLoadingUser || !authUser || !user) {
 	  return <ProfileHeaderSkeleton />;
@@ -181,7 +172,7 @@ const ProfilePage = () => {
 								className='btn btn-primary rounded-full btn-sm text-white px-4 ml-2'
 								onClick={() => updateProfile()}
 							>
-								{isUpdatingProfile? "Updating...":"Update"}
+								{isUpdatingProfile ? "Updating..." : "Update"}
 							</button>
 						)}
 					</div>
